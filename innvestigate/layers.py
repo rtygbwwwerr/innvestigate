@@ -130,18 +130,43 @@ class GradientWRT(keras.layers.Layer):
         self.mask = mask
         super(GradientWRT, self).__init__(**kwargs)
 
+    def get_gridents(self, x, y, known_y):
+        '''
+        computing gradients for Embedding layer
+        '''    
+        #if y is the output of an embedding layer
+        if str(y).find("embedding_lookup") > -1:
+            L = len(y)
+            N = len(x)
+            grads = []
+            for k in range(N):
+                grad = None
+                for i in range(L):
+                    grad_input = y[i] * known_y[i]
+#                     grad_mat = K.gather(grad_input,K.cast(x[k][0], dtype='int32'))
+                    if grad is None:
+                        grad = K.sum(grad_input, axis=-1)
+                    else:
+                        grad = grad + K.sum(grad_input, axis=-1)
+                grads.append(grad)
+        else:
+            grads = iK.gradients(x, y, known_y)
+        return grads
+    
     def call(self, x):
         assert isinstance(x, (list, tuple))
         Xs, tmp_Ys = x[:self.n_inputs], x[self.n_inputs:]
         assert len(tmp_Ys) % 2 == 0
         len_Ys = len(tmp_Ys) // 2
         Ys, known_Ys = tmp_Ys[:len_Ys], tmp_Ys[len_Ys:]
-        ret = iK.gradients(Xs, Ys, known_Ys)
+        ret = self.get_gridents(Xs, Ys, known_Ys)
         if self.mask is not None:
             ret = [x for c, x in zip(self.mask, ret) if c]
         self.__workaround__len_ret = len(ret)
         return ret
 
+
+    
     def compute_output_shape(self, input_shapes):
         if self.mask is None:
             return input_shapes[:self.n_inputs]
