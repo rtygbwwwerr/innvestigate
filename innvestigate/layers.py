@@ -133,6 +133,9 @@ class GradientWRT(keras.layers.Layer):
     def get_gridents(self, x, y, known_y):
         '''
         computing gradients for Embedding layer
+        :param x is input list for a layer, if input is multi-column, then len(x) > 1
+        :param y is output list for a layer, if output is multi-column, then len(y) > 1
+        :param known_y is accumulative gradients for current layer, must have the same shape with y
         '''    
         #if y is the output of an embedding layer
         if str(y).find("embedding_lookup") > -1:
