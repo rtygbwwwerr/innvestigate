@@ -473,11 +473,33 @@ class LRP(base.ReverseAnalyzerBase):
                         for a, b in zip(Xs, tmp)]
 
 
+        class EmbedReverselayer(kgraph.ReverseMappingBase):
+            def __init__(self, layer, state):
+                ##print("in AveragePoolingRerseLayer.init:", layer.__class__.__name__,"-> Dedicated ReverseLayer class" ) #debug
+                self._layer_wo_act = kgraph.copy_layer_wo_activation(layer,
+                                                                     name_template="reversed_kernel_%s")
+                
+            
+            def apply(self, Xs, Ys, Rs, reverse_state):
+                grad = ilayers.GradientWRT_Pooling(len(Xs))
+                # Get activations.
+                Zs = kutils.apply(self._layer_wo_act, Xs)
+                # Divide incoming relevance by the activations.
+                tmp = [ilayers.SafeDivide()([a, b])
+                       for a, b in zip(Rs, Zs)]
+
+                # Propagate the relevance to input neurons
+                # using the gradient.
+                tmp = iutils.to_list(grad(Xs+Zs+tmp))
+                # Re-weight relevance with the input values.
+                return [keras.layers.Multiply()([a, b])
+                        for a, b in zip(Xs, tmp)]
 
 
 
         # conditional mappings layer_criterion -> ReverseLayer on how to handle backward passes through layers.
         self._conditional_mappings = [
+            (kchecks.is_embed_layer, EmbedReverselayer),
             (kchecks.contains_kernel, ReverseLayer),
             (kchecks.is_batch_normalization_layer, BatchNormalizationReverseLayer),
             (kchecks.is_average_pooling, AveragePoolingRerseLayer),

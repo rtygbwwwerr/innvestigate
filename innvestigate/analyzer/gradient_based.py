@@ -95,9 +95,17 @@ class Gradient(base.ReverseAnalyzerBase):
                             "pre-softmax output."),
             },
         ]
-
+        
+        def grad(Xs, Ys, reversed_Ys, reverse_state):
+            return ilayers.GradientWRT_Pooling(len(Xs))(Xs+Ys+reversed_Ys)
+    
+        self._conditional_mappings = [
+            (kchecks.is_embed_layer, lambda Xs, Ys, reversed_Ys, reverse_state : grad(Xs, Ys, reversed_Ys, reverse_state))
+            ]
         super(Gradient, self).__init__(model, **kwargs)
+        
 
+   
     def _head_mapping(self, X):
         return ilayers.OnesLike()(X)
 

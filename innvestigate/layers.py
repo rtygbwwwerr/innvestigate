@@ -131,30 +131,7 @@ class GradientWRT(keras.layers.Layer):
         super(GradientWRT, self).__init__(**kwargs)
 
     def get_gridents(self, x, y, known_y):
-        '''
-        computing gradients for Embedding layer
-        :param x is input list for a layer, if input is multi-column, then len(x) > 1
-        :param y is output list for a layer, if output is multi-column, then len(y) > 1
-        :param known_y is accumulative gradients for current layer, must have the same shape with y
-        '''    
-        #if y is the output of an embedding layer
-        if str(y).find("embedding_lookup") > -1:
-            L = len(y)
-            N = len(x)
-            grads = []
-            for k in range(N):
-                grad = None
-                for i in range(L):
-                    grad_input = y[i] * known_y[i]
-#                     grad_mat = K.gather(grad_input,K.cast(x[k][0], dtype='int32'))
-                    if grad is None:
-                        grad = K.sum(grad_input, axis=-1)
-                    else:
-                        grad = grad + K.sum(grad_input, axis=-1)
-                grads.append(grad)
-        else:
-            grads = iK.gradients(x, y, known_y)
-        return grads
+        return iK.gradients(x, y, known_y)
     
     def call(self, x):
         assert isinstance(x, (list, tuple))
@@ -215,6 +192,30 @@ class GradientWRT(keras.layers.Layer):
         # carry over the input mask
         return mask
 
+class GradientWRT_Pooling(GradientWRT):
+    
+    def get_gridents(self, x, y, known_y):
+        '''
+        pooling gradients for Embedding layer
+        :param x is input list for a layer, if input is multi-column, then len(x) > 1
+        :param y is output list for a layer, if output is multi-column, then len(y) > 1
+        :param known_y is accumulative gradients for current layer, must have the same shape with y
+        '''    
+        L = len(y)
+        N = len(x)
+        grads = []
+        for k in range(N):
+            grad = None
+            for i in range(L):
+                grad_input = y[i] * known_y[i]
+#                     grad_mat = K.gather(grad_input,K.cast(x[k][0], dtype='int32'))
+                if grad is None:
+                    grad = K.sum(grad_input, axis=-1)
+                else:
+                    grad = grad + K.sum(grad_input, axis=-1)
+            grads.append(grad)
+        return grads
+    
 
 ###############################################################################
 ###############################################################################

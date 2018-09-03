@@ -16,6 +16,7 @@ import innvestigate.utils as iutils
 import innvestigate.utils.visualizations as ivis
 
 
+
 if __name__ == "__main__":
     eutils = imp.load_source("utils", "utils.py")
     mnistutils = imp.load_source("utils_mnist", "utils_mnist.py")
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     modelname = 'mlp_3dense'
     activation_type = 'relu'
     input_range = [-1, 1]
-    epochs = 3
+    epochs = 2
     batch_size = 256
     create_model_kwargs = {'dense_units':1024, 'dropout_rate':0.25}
     

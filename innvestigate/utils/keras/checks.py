@@ -267,6 +267,8 @@ def is_conv_layer(layer, *args, **kwargs):
     )
     return isinstance(layer, CONV_LAYERS)
 
+def is_embed_layer(layer, *args, **kwargs):
+    return isinstance(layer, keras.layers.embeddings.Embedding)
 
 def is_batch_normalization_layer(layer, *args, **kwargs):
     return isinstance(layer, keras.layers.normalization.BatchNormalization)
